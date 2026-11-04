@@ -1,0 +1,14 @@
+# Pinned corpus. Every eval result records this manifest's hash, so a number
+# can always be traced back to the exact document it was measured on.
+# The PDFs themselves are not in git (ST licensing); see `url` to obtain them.
+
+[[documents]]
+doc_id = "RM0090"
+title = "STM32F405/415, STM32F407/417, STM32F427/437 and STM32F429/439 advanced Arm-based 32-bit MCUs - Reference manual"
+revision = "Rev 22"
+date = "May 2026"
+pages = 1741
+path = "data/STM_0090_sourcedoc.pdf"
+sha256 = "f3ff2322eec21f4e49081f68481b764506eee81dba6031bc767e2f8955b27cca"
+# ST serves the *latest* revision at this URL; a newer one will fail the hash check.
+url = "https://www.st.com/resource/en/reference_manual/rm0090-stm32f405415-stm32f407417-stm32f427437-and-stm32f429439-advanced-armbased-32bit-mcus-stmicroelectronics.pdf"
