@@ -1,5 +1,8 @@
 """Split each page into chunks. Chunks never cross a page boundary, so each one cites exactly one page.
 
+Length is measured in tokens of the embedding model's tokenizer, not characters: dense tables pack
+far more tokens per character than prose, and the model silently truncates past 512 tokens.
+
 Run:  uv run python -m stmragged.chunking        # chunk everything, print stats
       uv run python -m stmragged.chunking 287    # print the chunks of page 287
 """
@@ -9,15 +12,22 @@ from collections import Counter
 
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from transformers import AutoTokenizer
 
 from stmragged.loading import load_pages
 
-CHUNK_SIZE = 1000  # max characters per chunk
-CHUNK_OVERLAP = 150  # characters repeated from the end of one chunk at the start of the next
+EMBEDDING_MODEL = "BAAI/bge-base-en-v1.5"  # its tokenizer measures chunk length
+# About 1,000 / 150 characters of prose (3.56 chars per token), so prose chunks keep their old size
+# and only dense tables get cut shorter. Well under the model's 512-token limit.
+CHUNK_SIZE = 280  # max tokens per chunk, excluding [CLS] and [SEP]
+CHUNK_OVERLAP = 40  # tokens repeated from the end of one chunk at the start of the next
 
 
 def chunk_pages(pages: list[Document]) -> list[Document]:
-    splitter = RecursiveCharacterTextSplitter(chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP)
+    tokenizer = AutoTokenizer.from_pretrained(EMBEDDING_MODEL)
+    splitter = RecursiveCharacterTextSplitter.from_huggingface_tokenizer(
+        tokenizer, chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP
+    )
     chunks = []
     for page in pages:
         for i, text in enumerate(splitter.split_text(page.page_content)):
@@ -44,8 +54,9 @@ def main() -> int:
     spread = Counter(per_page.values())  # how many pages produced 1 chunk, 2 chunks, ...
 
     print(f"{len(chunks)} chunks from {len(per_page)} pages")
-    print(f"Chunk length: min {min(lengths)}, mean {sum(lengths) // len(lengths)}, max {max(lengths)}")
+    print(f"Chunk length in characters: min {min(lengths)}, mean {sum(lengths) // len(lengths)}, max {max(lengths)}")
     print("Chunks per page: " + ", ".join(f"{n} chunk(s): {spread[n]} pages" for n in sorted(spread)))
+    print("(Token counts and the 512-limit check: uv run python -m stmragged.token_check)")
     return 0
 
 

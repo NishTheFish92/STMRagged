@@ -26,8 +26,26 @@ Phase 2 starts only once Phase 1 is done.
 | Output | **Answers only.** Register names, values and procedures, in prose. No code generation |
 | LLM | `gemini-3.5-flash-lite`, served by freeLLMAPI through LangChain's OpenAI-compatible client. The same pinned model for every eval run, and for Phase 2 (it must support tool calling). Credentials live in `.env`, which is never read or committed |
 | Framework | Python + LangChain |
-| Rest of the stack | Not fixed yet (vector store, embeddings, retrievers, interface). Decide while building and record each choice and the reason in the README |
+| Embeddings | `bge-base-en-v1.5`, local on Nishant's 4 GB GTX 1650 Ti. `bge-large` is a planned experiment, not the default |
+| Rest of the stack | Not fixed yet (vector store, retrievers). Decide while building and record each choice and the reason in the README |
 | Real users | None for now |
+
+## How we work
+
+- Nishant runs every command and install (`uv add`, scripts). Claude writes the main code and tells him what to run.
+- One module at a time, never the whole pipeline at once. Before writing a file, say what it does and why; write one file at a time.
+- Explain the design choices; ask questions only where there's a real decision. Nishant gathers facts from the PDF when a module needs them.
+- Keep the current phase lean: build the smallest working version first, then measured improvements.
+
+## Status (as of 2026-11-05)
+
+Modules 1–3 are done: corpus manifest, loading, chunking. The pipeline table, every decision so far and the reasons for it, and the planned experiments are in `README.md`. Keep that file up to date as decisions are made.
+
+**Next: Module 4, embedding + vector store.**
+1. Write a token-count check with the `bge-base-en-v1.5` tokenizer over all 4,001 chunks: the max, and how many exceed 512 (and 450, for margin). Dense table chunks are the risk. If some exceed the limit, switch the splitter to count tokens with that tokenizer.
+2. Choose the vector store.
+
+**Golden-set notes picked up so far:** tag questions that need a figure, and questions about wide or merged-cell tables (e.g. the boundary-address tables, where one Bus cell spans several rows). The baseline is expected to struggle on both.
 
 ## The questions this project answers
 
